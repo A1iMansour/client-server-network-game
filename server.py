@@ -1,5 +1,6 @@
 import random
 import socket
+import socketserver
 import time
 
 host= "10.169.20.37"##IP address for local host.
@@ -46,22 +47,42 @@ def gamestarted():
     global roundnumber 
     roundnumber +=1
     randomnumber=random.randint(0,9)
+    # totalScores=[] # array to save cumulative scores
     for i in range(len(clients)):
         timesend=time.ctime()##To calculate RTT.
-        clients[i].sendall(f"{str({randomnumber})}".encode('ascii'))
+        clients[i].sendall(f"the number is: {str({randomnumber})}".encode('ascii'))
 
         answer=clients[i].recv(1024).decode('ascii')##Recieving player's answer.
         ##+ add timer for player
-        timerecieved=time.ctime()
-        RTT=timesend-timerecieved
+        timereceived=time.ctime()
+        RTT=timesend-timereceived
         if answer==randomnumber:
             scores[i]= RTT
+            #totalScores.append((clients, RTT)) # add current round score to total score
+            cumulative_score[i]+=scores[i] # add current round score to total score
         else:
             scores[i]==0##Player disqualified from round.
+            disqualify_msg = 'You entered the wrong number and are disqualified from this round.'
+            clients.send(disqualify_msg.encode())
 
-        cumulative_score[i]+=scores[i]
+        #cumulative_score[i]+=scores[i]
+        # send results and cumulatives after each round
+        print(f'Results for round {i+1} :')
+        cumulative_score[i].sort(key=lambda x: x[1])
+        for i, cumulative_score in enumerate(clients):
+            print('Round ', i+1, ': Player ', i+1, ':', scores[1], 'seconds')
+            print('Overall Score', cumulative_score[1], 's')
 
 
-#Function that sends results and cumlative scores.
+#Function that displays final scores and closes connections
 def broadcast():
+    winner = max(cumulative_score, key=cumulative_score.get)
+    print('The Final Score Is: ')
+    for client, cumulative_score in cumulative_score.items():
+        print(f'Player {clients.index(clients)+1} : {cumulative_score}s')
+    print(f'The Winner is ... {clients.index(winner)+1} !!!')
 
+    # disconnect remaining players
+    for client in clients:
+        client.close()
+    socketserver.close()
