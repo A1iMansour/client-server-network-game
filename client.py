@@ -16,7 +16,6 @@ welcome_message = client_socket.recv(1024)
 print(welcome_message.decode('ascii'))
 
 for round_num in range(3):
-    print(round_num)
     # receive the random number from the server
     random_number = client_socket.recv(1024)
 
