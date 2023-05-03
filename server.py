@@ -46,16 +46,16 @@ def connection():
 
 
         # This part was written by Maya Chami
-        elif roundnumber>=3:##GAME ended
-            Final_score=next(iter(sortedcumulative_score))
+        elif roundnumber>=3:                                #check if roundnumber>3, in that case GAME ended
+            Final_score=next(iter(sortedcumulative_score))  #git number of player with highest score
             winner=f"Winner Winner chicken Dinner: Player{Final_score} with score:{sortedcumulative_score[Final_score]},s"
-            print(winner)
+            print(winner)                                   #displaying winner with score
             # disconnect remaining players
-            for i in range(len(clients)):
-             clients[i][0].sendall(f"{winner}".encode('ascii'))
-             clients[i][0].close()
-            csocket.close()
-            break
+            for i in range(len(clients)):                   
+                clients[i][0].sendall(f"{winner}".encode('ascii'))  #send to all clients who is winner
+                clients[i][0].close()                               #close connection with client
+            csocket.close()                     #close socket
+            break                               #break loop
 
 
 # This part was written by Ali Mansour
