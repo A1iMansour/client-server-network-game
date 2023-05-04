@@ -26,9 +26,7 @@ roundnumber=0           #initialize round number to 0
 cumulative_score={0:0,1:0,2:0}#dictionary where values are cumulative score and keys are players ID
 sortedcumulative_score={}     #sorted dictionary where values are cumulative score and keys are players ID
 sortedscores={}               #sorted dictionary where values are round's score and keys are player's ID
-
-#Function to connect clients to server.
-def connection():
+def connection():             #Function to connect clients to server.
     global sortedcumulative_score
     playernumber=1                          #initializing playernumber to 1
     gamestarts=False                        #initializing gamestarts to False
