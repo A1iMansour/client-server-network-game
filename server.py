@@ -1,4 +1,5 @@
 import random
+import select
 import socket
 import socketserver
 import time
@@ -14,7 +15,7 @@ handle erors:
 
 # This part was written by Ali Mansour
 host= '127.0.0.1'##IP address for local host
-port=9989 ##Port number.
+port=9789 ##Port number.
 serv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)##socket to accept connections.
 serv.bind((host,port))
 serv.listen()
@@ -70,11 +71,23 @@ def gamestarted():
     disqualified=[]                     # to be used to store players who are diqualified
     for i in range(len(clients)):
         print(i)
-        clients[i][0].sendall(f"{str(randomnumber)}".encode('ascii'))#sending random number to client
+        clients[i][0].sendall(f"Random number is {str(randomnumber)}".encode('ascii'))#sending random number to client
         timesend=time.time()                                        #get time at at which the number is send to calculate RTT
-        answer=clients[i][0].recv(1024).decode('ascii')             #Recieving player's answer
-        ##+ add timer for player
-        timereceived=time.time()                                    #get time at at which the answer is recieved to calculate RTT
+        waiting=0
+        while True:                                                 #while loop for timeout 
+            print(waiting-timesend)
+            # Wait for the socket to become readable
+            ready_to_read, _, _ = select.select([clients[i][0]], [], [], 0.1)
+            waiting=time.time()
+            # If the socket is readable, receive data from it
+            if ready_to_read and waiting-timesend<10:                        #10 seconds timeout
+                answer=clients[i][0].recv(1024).decode('ascii')             #Recieving player's answer
+                timereceived=time.time()                                    #get time at at which the answer is recieved to calculate RTT
+                break
+            elif waiting-timesend>10:
+                answer=-1                                                   #disqualified
+                timereceived=-1                                             #indicating timeout
+                break
         print(f"time send:{timesend}, time recieved:{timereceived}")#printing time send and time recieved just to track
         RTT=timereceived-timesend                                   #calculating RTT
         if RTT>maxrtt:                                              #check if we need to update maxrtt
@@ -84,9 +97,10 @@ def gamestarted():
             clients[i][0].send(congrats.encode('ascii'))            #sends congrats to client
             scores[i]= RTT                                          #store this round's score
             cumulative_score[i]+=scores[i]                          #add current round score to total score
-        else:                                                       #wrong answer, Player disqualified from round 
+        else:  
+            print("disqualiii")                                                     #wrong answer, Player disqualified from round 
             disqualified.append(i)                                  #store diqualified players
-            disqualify_msg = 'You entered the wrong number and are disqualified from this round.'
+            disqualify_msg = 'You are out of time, you are disqualified from this round.'
             clients[i][0].send(disqualify_msg.encode('ascii'))      #sending disqualified message to client
     
     for i in range(len(disqualified)):
