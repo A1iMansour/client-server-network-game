@@ -6,7 +6,7 @@ import time
 # This part was written by Christophe Kassab 
 # specify the server's IP address and port number
 SERVER_IP = '127.0.0.1'
-SERVER_PORT = 9789
+SERVER_PORT = 9889
 
 # create a TCP socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

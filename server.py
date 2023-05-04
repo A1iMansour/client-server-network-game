@@ -8,7 +8,7 @@ import numpy as np
 
 # This part was written by Ali Mansour
 host= '127.0.0.1'##IP address for local host
-port=9789 ##Port number.
+port=9889 ##Port number.
 serv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)##socket to accept connections.
 serv.bind((host,port))
 serv.listen()
@@ -104,9 +104,16 @@ def gamestarted():
             clients[i][0].send(congrats.encode('ascii'))            #sends congrats to client
             scores[i]= RTT                                          #store this round's score
             cumulative_score[i]+=scores[i]                          #add current round score to total score
+        elif answer ==-1:                                                       #wrong answer, Player disqualified from round 
+            disqualified.append(i)                                  #store diqualified players
+            disqualify_msg = ' You are out of time, you are disqualified from this round.'
+            clients[i][0].send(disqualify_msg.encode('ascii'))      #sending disqualified message to client
+    
+        
+        
         else:                                                       #wrong answer, Player disqualified from round 
             disqualified.append(i)                                  #store diqualified players
-            disqualify_msg = 'You are out of time, you are disqualified from this round.'
+            disqualify_msg = ' you are disqualified from this round.'
             clients[i][0].send(disqualify_msg.encode('ascii'))      #sending disqualified message to client
     
     for i in range(len(disqualified)):
