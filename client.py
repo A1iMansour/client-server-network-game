@@ -20,7 +20,10 @@ print(welcome_message.decode('ascii'))
 
 for round_num in range(3):
     # receive the random number from the server
-    random_number = client_socket.recv(1024)
+    try:
+        random_number = client_socket.recv(1024)
+    except ConnectionResetError:
+            print(f"Game ended")
 
     print(f"Round {round_num + 1}:{random_number.decode('ascii')}")
     print('Type the number and press Enter: ')# prompt the user to input the number
@@ -30,31 +33,45 @@ for round_num in range(3):
     waiting=0
     number=None
     # send the number to the server and record the start time
-    while True:
+    while True:             #for 10 seconds timeout
         waiting=time.time()
         
-        if number==None and waiting-timer<9.9:
+        if number==None and waiting-timer<9.9: #9.9 to avoid error if user send just before 10 seconds
             if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 number = input("")
             pass
-        elif number!=None:    
-            client_socket.send(number.encode('ascii'))
+        elif number!=None:  
+            try:  
+                client_socket.send(number.encode('ascii'))
+            except ConnectionResetError:
+                print(f"Game ended")
             break
         
         elif waiting-timer>9.9:    #timeout                        
             break               
 
 # This part was written by Christophe Kassab
-    result = client_socket.recv(1024)# receive the round message from the server 
+    try:
+        result = client_socket.recv(1024)# receive the round message from the server 
+    except ConnectionResetError:
+        print(f"Game ended")
     # display the result and the round trip time
     print(f"Result: Round {round_num + 1} : {result.decode('ascii')}")
     
     # receive and display the cumulative scores after each round
-    cumulative_scores = client_socket.recv(1024)
+    try:
+        cumulative_scores = client_socket.recv(1024)
+    except ConnectionResetError:
+        print(f"Game ended")
+        round_num=4# exit loop
+        break
     print(f"Cumulative scores after Round {round_num + 1}:\n{cumulative_scores.decode('ascii')}")
 
 #display the final result
-result = client_socket.recv(1024)
+try:
+    result = client_socket.recv(1024)
+except ConnectionResetError:
+    print(f"Game ended")
 print(f"{result.decode('ascii')}")
 # close the socket
 client_socket.close()

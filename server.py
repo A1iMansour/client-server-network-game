@@ -4,14 +4,9 @@ import socket
 import socketserver
 import time
 import numpy as np
+#Disconection error handling written by Ali Mansour
+# other error handling snippets are written by Adam Sabra
 
-"""Remaining to do:
-handle erors:
-1-if some clients left game
-2- if client or server didnt recieve answer
-3- if client did'nt answer after long duration
-...
-"""
 
 # This part was written by Ali Mansour
 host= '127.0.0.1'##IP address for local host
@@ -34,7 +29,8 @@ def connection():             #Function to connect clients to server.
     while True:
         if gamestarts==False:               #check if game starts, to avoid waiting for clients at the end of each round
             csocket,address=serv.accept()   #communication socket,each connection gets its socket.
-            csocket.sendall("Welcome to the ultimate gaming experience!".encode('ascii'))   #sending welcome message.
+            print(f"New connection from {address}")                         #displaying connections
+            csocket.sendall("Welcome to the ultimate gaming experience!\nPlease wait for other players".encode('ascii'))   #sending welcome message.
             clients.append((csocket,f"Player{playernumber}"))               #add the client info to list
             playernumber+=1                                                 #increment playernumber                             
 
@@ -57,6 +53,7 @@ def connection():             #Function to connect clients to server.
             break                               #break loop
 
 
+
 # This part was written by Ali Mansour
 #Function that handles game's logic
 def gamestarted():
@@ -70,20 +67,31 @@ def gamestarted():
     maxrtt=0                            # to be used for penalty for player who is diqualified
     disqualified=[]                     # to be used to store players who are diqualified
     for i in range(len(clients)):
-        print(i)
-        clients[i][0].sendall(f"Random number is {str(randomnumber)}".encode('ascii'))#sending random number to client
+        try:
+            clients[i][0].sendall(f"Random number is {str(randomnumber)}".encode('ascii'))#sending random number to client
+        except ConnectionResetError:
+            print(f"{clients[i][0]} was diconnected")
+            return
         timesend=time.time()                                        #get time at at which the number is send to calculate RTT
         waiting=0
         while True:                                                 #while loop for timeout 
-            print(waiting-timesend)
+            
             # Wait for the socket to become readable
             ready_to_read, _, _ = select.select([clients[i][0]], [], [], 0.1)
             waiting=time.time()
             # If the socket is readable, receive data from it
             if ready_to_read and waiting-timesend<10:                        #10 seconds timeout
-                answer=clients[i][0].recv(1024).decode('ascii')             #Recieving player's answer
-                timereceived=time.time()                                    #get time at at which the answer is recieved to calculate RTT
-                break
+                try:
+                    answer=clients[i][0].recv(1024).decode('ascii')             #Recieving player's answer
+                    timereceived=time.time()                                    #get time at at which the answer is recieved to calculate RTT
+                    if isinstance(answer,str):
+                        break
+                    print("hi")
+                except ConnectionResetError:
+                    i=4
+                    print(f"{clients[i][0]} was diconnected")
+                    return
+
             elif waiting-timesend>10:
                 answer=-1                                                   #disqualified
                 timereceived=-1                                             #indicating timeout
@@ -92,13 +100,13 @@ def gamestarted():
         RTT=timereceived-timesend                                   #calculating RTT
         if RTT>maxrtt:                                              #check if we need to update maxrtt
             maxrtt=RTT                                              #update maxrtt
+        
         if int(answer)==randomnumber:                               #check if answer is correct
             congrats = 'BRAVOO!!'
             clients[i][0].send(congrats.encode('ascii'))            #sends congrats to client
             scores[i]= RTT                                          #store this round's score
             cumulative_score[i]+=scores[i]                          #add current round score to total score
-        else:  
-            print("disqualiii")                                                     #wrong answer, Player disqualified from round 
+        else:                                                       #wrong answer, Player disqualified from round 
             disqualified.append(i)                                  #store diqualified players
             disqualify_msg = 'You are out of time, you are disqualified from this round.'
             clients[i][0].send(disqualify_msg.encode('ascii'))      #sending disqualified message to client
@@ -126,17 +134,19 @@ def gamestarted():
     #printing in descending order this round's scores and sending them to clients
     result=f'Results for round {roundnumber} :'+"\n"
     for j in sortedscores :
-        result+='Round '+str(roundnumber)+  ': Player '+  str(j)+  ':'+  str(scores[j])+  ' seconds\n'
+        result+='Round '+str(roundnumber)+  ': Player '+  str(j)+  ':'+  str(sortedscores[j])+  ' seconds\n'
    
     #printing in descending order cumulative scores
     for j in sortedcumulative_score :
-        result+='Overall Score:  Round '+  str(roundnumber)+ ': Player '+ str(j)+ ':'+ str(scores[j])+ ' seconds\n'
+        result+='Overall Score:  Round '+  str(roundnumber)+ ': Player '+ str(j)+ ':'+ str(sortedcumulative_score[j])+ ' seconds\n'
 
     print(result)   
     for i in range(len(clients)):
-        clients[i][0].sendall(result.encode('ascii'))
-
-
+        try:
+            clients[i][0].sendall(result.encode('ascii'))
+        except ConnectionResetError:
+            print(f"{clients[i][0]} was diconnected")
+            return
 #Main function
 def main():
     connection()
