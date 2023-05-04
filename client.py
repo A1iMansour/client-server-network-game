@@ -2,7 +2,7 @@ import select
 import socket
 import sys
 import time
-
+#Disconection error handling written by Ali Mansour and Adam Sabra
 # This part was written by Christophe Kassab 
 # specify the server's IP address and port number
 SERVER_IP = '127.0.0.1'

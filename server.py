@@ -4,9 +4,7 @@ import socket
 import socketserver
 import time
 import numpy as np
-#Disconection error handling written by Ali Mansour
-# other error handling snippets are written by Adam Sabra
-
+#Disconection error handling written by Ali Mansour and Adam Sabra
 
 # This part was written by Ali Mansour
 host= '127.0.0.1'##IP address for local host
