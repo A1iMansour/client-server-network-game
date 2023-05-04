@@ -12,7 +12,7 @@ handle erors:
 ...
 """
 
-# This part was written by Maya Chami
+# This part was written by Ali Mansour
 host= '127.0.0.1'##IP address for local host
 port=9989 ##Port number.
 serv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)##socket to accept connections.
@@ -71,7 +71,7 @@ def gamestarted():
     maxrtt=0                            # to be used for penalty for player who is diqualified
     disqualified=[]                     # to be used to store players who are diqualified
     for i in range(len(clients)):
-        
+        print(i)
         clients[i][0].sendall(f"{str(randomnumber)}".encode('ascii'))#sending random number to client
         timesend=time.time()                                        #get time at at which the number is send to calculate RTT
         answer=clients[i][0].recv(1024).decode('ascii')             #Recieving player's answer
